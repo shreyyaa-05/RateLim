@@ -28,3 +28,17 @@ export const authenticate = (req, res, next) => {
 
   next();
 };
+
+/**
+ * Guard middleware that blocks request if req.user is not populated.
+ */
+export const requireAuth = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      status: 'error',
+      statusCode: 401,
+      message: 'Unauthorized access. Authentication is required.',
+    });
+  }
+  next();
+};

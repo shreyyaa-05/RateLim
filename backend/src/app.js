@@ -6,6 +6,8 @@ import loginRoutes from './routes/loginRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import requestRoutes from './routes/requestRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 import { authenticate } from './middleware/auth.js';
 import { statsTracker } from './middleware/statsTracker.js';
 import { fixedWindowRateLimiter } from './middleware/rateLimiter.js';
@@ -19,6 +21,17 @@ app.set('trust proxy', true);
 // Standard body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Enable CORS for frontend requests
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Request logging using morgan
 const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
@@ -35,6 +48,8 @@ app.use('/health', healthRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/requests', requestRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/test', testRoutes);
 app.use('/login', loginRoutes);
 

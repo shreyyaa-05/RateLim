@@ -1,4 +1,6 @@
 import { incrementStats } from '../services/dashboardService.js';
+import { addRequestLog } from '../services/requestService.js';
+import { trackRequest } from '../services/analyticsService.js';
 
 /**
  * Middleware that tracks request statistics globally.
@@ -6,29 +8,52 @@ import { incrementStats } from '../services/dashboardService.js';
  * without modifying any rate-limiting logic.
  */
 export const statsTracker = (req, res, next) => {
+  const start = Date.now();
+  
   // Exclude healthcheck routes from stats metrics to avoid noise
-  if (req.originalUrl && req.originalUrl.includes('/health')) {
-    return next();
-  }
+  const isHealth = req.originalUrl && req.originalUrl.includes('/health');
 
-  // Increment total request counter
-  incrementStats('totalRequests');
+  if (!isHealth) {
+    // Increment total request counter
+    incrementStats('totalRequests');
+  }
 
   // Monitor response end event
   res.on('finish', () => {
-    // Authenticated vs Anonymous statistics
-    if (req.user) {
-      incrementStats('authenticatedRequests');
-    } else {
-      incrementStats('anonymousRequests');
+    const isAllowed = res.statusCode >= 200 && res.statusCode < 400;
+    const isBlocked = res.statusCode === 429;
+
+    if (!isHealth) {
+      // Authenticated vs Anonymous statistics
+      if (req.user) {
+        incrementStats('authenticatedRequests');
+      } else {
+        incrementStats('anonymousRequests');
+      }
+
+      // Blocked vs Allowed statistics
+      if (isBlocked) {
+        incrementStats('blockedRequests');
+      } else if (isAllowed) {
+        incrementStats('allowedRequests');
+      }
+
+      // Track request in analytics service
+      trackRequest(isAllowed, isBlocked);
     }
 
-    // Blocked vs Allowed statistics
-    if (res.statusCode === 429) {
-      incrementStats('blockedRequests');
-    } else if (res.statusCode >= 200 && res.statusCode < 400) {
-      incrementStats('allowedRequests');
-    }
+    // Capture latency and log request for monitoring
+    const latency = Date.now() - start;
+    const client = req.user?.id || req.ip || 'unknown';
+
+    addRequestLog({
+      method: req.method,
+      endpoint: req.originalUrl || req.url,
+      status: res.statusCode,
+      latency,
+      client,
+      timestamp: new Date().toISOString(),
+    });
   });
 
   next();

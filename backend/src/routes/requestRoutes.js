@@ -1,10 +1,10 @@
 import express from 'express';
-import { getStats } from '../controllers/dashboardController.js';
+import { getRequests } from '../controllers/requestController.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET /api/dashboard/stats
-router.get('/stats', requireAuth, getStats);
+// GET /api/requests
+router.get('/', requireAuth, getRequests);
 
 export default router;

@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import test from 'node:test';
 import * as dashboardService from '../src/services/dashboardService.js';
 import { getStats } from '../src/controllers/dashboardController.js';
-import { requireAuth } from '../src/routes/dashboardRoutes.js';
+import { requireAuth } from '../src/middleware/auth.js';
 import { redisClient } from '../src/config/redis.js';
 import mongoose from 'mongoose';
 
