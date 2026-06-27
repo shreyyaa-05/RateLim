@@ -3,6 +3,7 @@ import morgan from 'morgan';
 import healthRoutes from './routes/healthRoutes.js';
 import testRoutes from './routes/testRoutes.js';
 import loginRoutes from './routes/loginRoutes.js';
+import { fixedWindowRateLimiter } from './middleware/rateLimiter.js';
 import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
@@ -22,6 +23,14 @@ app.use(morgan(logFormat));
 app.use('/health', healthRoutes);
 app.use('/test', testRoutes);
 app.use('/login', loginRoutes);
+
+app.get('/sliding-test', fixedWindowRateLimiter({ strategy: 'sliding-window', maxRequests: 5, windowInSeconds: 60 }), (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Sliding window request successful.',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Fallback for 404 route not found
 app.use((req, res, next) => {

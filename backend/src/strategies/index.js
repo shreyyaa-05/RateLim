@@ -1,7 +1,9 @@
 import { fixedWindowStrategy } from './fixedWindowStrategy.js';
+import { slidingWindowStrategy } from './slidingWindowStrategy.js';
 
 const strategies = {
   'fixed-window': fixedWindowStrategy,
+  'sliding-window': slidingWindowStrategy,
 };
 
 /**
