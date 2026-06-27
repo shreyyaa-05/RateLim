@@ -4,7 +4,10 @@ import healthRoutes from './routes/healthRoutes.js';
 import testRoutes from './routes/testRoutes.js';
 import loginRoutes from './routes/loginRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 import { authenticate } from './middleware/auth.js';
+import { statsTracker } from './middleware/statsTracker.js';
 import { fixedWindowRateLimiter } from './middleware/rateLimiter.js';
 import errorHandler from './middleware/errorHandler.js';
 
@@ -24,9 +27,14 @@ app.use(morgan(logFormat));
 // Apply global authentication parser (extracts user info if token is provided)
 app.use(authenticate);
 
+// Track stats globally for all requests
+app.use(statsTracker);
+
 // Register routes
 app.use('/health', healthRoutes);
 app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/test', testRoutes);
 app.use('/login', loginRoutes);
 
