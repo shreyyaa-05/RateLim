@@ -3,6 +3,8 @@ import morgan from 'morgan';
 import healthRoutes from './routes/healthRoutes.js';
 import testRoutes from './routes/testRoutes.js';
 import loginRoutes from './routes/loginRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import { authenticate } from './middleware/auth.js';
 import { fixedWindowRateLimiter } from './middleware/rateLimiter.js';
 import errorHandler from './middleware/errorHandler.js';
 
@@ -19,8 +21,12 @@ app.use(express.urlencoded({ extended: true }));
 const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(logFormat));
 
+// Apply global authentication parser (extracts user info if token is provided)
+app.use(authenticate);
+
 // Register routes
 app.use('/health', healthRoutes);
+app.use('/auth', authRoutes);
 app.use('/test', testRoutes);
 app.use('/login', loginRoutes);
 

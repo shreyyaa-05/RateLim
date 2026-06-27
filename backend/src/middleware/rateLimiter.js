@@ -26,10 +26,10 @@ export const fixedWindowRateLimiter = (options = {}) => {
   const strategy = getStrategy(strategyName);
 
   return async (req, res, next) => {
-    const ip = req.ip || 'unknown';
+    const identifier = req.user?.id || req.ip || 'unknown';
 
     try {
-      const result = await strategy(ip, { maxRequests: limit, windowInSeconds: windowDuration });
+      const result = await strategy(identifier, { maxRequests: limit, windowInSeconds: windowDuration });
 
       // Set standard rate limit headers
       res.setHeader('X-RateLimit-Limit', result.limit);

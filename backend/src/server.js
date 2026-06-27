@@ -1,13 +1,17 @@
 import dotenv from 'dotenv';
+// Initialize environment variables config immediately
+dotenv.config();
+
 import app from './app.js';
 import { connectRedis, redisClient } from './config/redis.js';
-
-// Initialize environment variables config
-dotenv.config();
+import { connectDB } from './config/db.js';
 
 const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
+  // Connect to MongoDB
+  await connectDB();
+
   // Connect to Redis in the background (non-blocking)
   connectRedis();
 
