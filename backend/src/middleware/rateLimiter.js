@@ -1,34 +1,36 @@
 import { getStrategy } from '../strategies/index.js';
+import { getPolicyForEndpoint } from '../services/policyService.js';
 
 /**
  * Extensible rate-limiting middleware factory.
  * Resolves the selected rate-limiting strategy (e.g., 'fixed-window')
- * and delegates the request check to it.
- * 
- * @param {Object} options Configuration options
- * @param {string} [options.strategy='fixed-window'] Rate-limiting strategy name
- * @param {number} options.maxRequests Maximum requests allowed in the window
- * @param {number} options.windowInSeconds Window duration in seconds
+ * dynamically at runtime based on the requested endpoint policy cache.
  */
 export const fixedWindowRateLimiter = (options = {}) => {
-  const strategyName = options.strategy || 'fixed-window';
-  const limit = options.maxRequests ?? parseInt(process.env.RATE_LIMIT_MAX, 10);
-  const windowDuration = options.windowInSeconds ?? parseInt(process.env.RATE_LIMIT_WINDOW, 10);
-
-  if (limit === undefined || isNaN(limit)) {
-    throw new Error('Rate limiter option "maxRequests" (or RATE_LIMIT_MAX environment variable) must be configured.');
-  }
-  if (windowDuration === undefined || isNaN(windowDuration)) {
-    throw new Error('Rate limiter option "windowInSeconds" (or RATE_LIMIT_WINDOW environment variable) must be configured.');
-  }
-
-  // Resolve strategy function at creation time
-  const strategy = getStrategy(strategyName);
-
   return async (req, res, next) => {
+    // Normalize path by stripping trailing slash
+    let endpoint = req.baseUrl + req.path;
+    if (endpoint.length > 1 && endpoint.endsWith('/')) {
+      endpoint = endpoint.slice(0, -1);
+    }
+
+    // Retrieve active policy for this endpoint from cache
+    const policy = getPolicyForEndpoint(endpoint);
+
+    // If policy is explicitly disabled, bypass rate limiting
+    if (!policy.enabled) {
+      return next();
+    }
+
+    const strategyName = policy.algorithm || 'fixed-window';
+    const limit = policy.maxRequests;
+    const windowDuration = policy.windowInSeconds;
+
     const identifier = req.user?.id || req.ip || 'unknown';
 
     try {
+      // Resolve strategy function at runtime
+      const strategy = getStrategy(strategyName);
       const result = await strategy(identifier, { maxRequests: limit, windowInSeconds: windowDuration });
 
       // Set standard rate limit headers
@@ -49,7 +51,7 @@ export const fixedWindowRateLimiter = (options = {}) => {
       next();
     } catch (error) {
       // Fail-open: log errors and allow request to proceed
-      console.error(`[Rate Limiter] Strategy "${strategyName}" failed for IP ${ip}:`, error.message);
+      console.error(`[Rate Limiter] Strategy "${strategyName}" failed for client ${identifier}:`, error.message);
       next();
     }
   };

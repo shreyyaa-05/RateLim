@@ -5,12 +5,16 @@ dotenv.config();
 import app from './app.js';
 import { connectRedis, redisClient } from './config/redis.js';
 import { connectDB } from './config/db.js';
+import { initPolicyService } from './services/policyService.js';
 
 const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
   // Connect to MongoDB
   await connectDB();
+
+  // Initialize Rate Limiting Policies from Database
+  await initPolicyService();
 
   // Connect to Redis in the background (non-blocking)
   connectRedis();

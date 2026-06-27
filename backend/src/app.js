@@ -8,6 +8,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import requestRoutes from './routes/requestRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
+import policyRoutes from './routes/policyRoutes.js';
 import { authenticate } from './middleware/auth.js';
 import { statsTracker } from './middleware/statsTracker.js';
 import { fixedWindowRateLimiter } from './middleware/rateLimiter.js';
@@ -50,10 +51,11 @@ app.use('/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/policies', policyRoutes);
 app.use('/test', testRoutes);
 app.use('/login', loginRoutes);
 
-app.get('/sliding-test', fixedWindowRateLimiter({ strategy: 'sliding-window', maxRequests: 5, windowInSeconds: 60 }), (req, res) => {
+app.get('/sliding-test', fixedWindowRateLimiter(), (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'Sliding window request successful.',

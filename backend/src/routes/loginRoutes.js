@@ -5,7 +5,7 @@ const router = express.Router();
 
 // POST /login
 // Applying a stricter limit: 3 requests per 60 seconds
-router.post('/', fixedWindowRateLimiter({ maxRequests: 3, windowInSeconds: 60 }), (req, res) => {
+router.post('/', fixedWindowRateLimiter(), (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'Login route request successful.',
