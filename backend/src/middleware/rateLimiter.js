@@ -4,7 +4,8 @@ import { getPolicyForEndpoint } from '../services/policyService.js';
 /**
  * Extensible rate-limiting middleware factory.
  * Resolves the selected rate-limiting strategy (e.g., 'fixed-window')
- * dynamically at runtime based on the requested endpoint policy cache.
+ * dynamically at runtime based on the requested endpoint policy cache,
+ * fallback middleware options, or global defaults.
  */
 export const fixedWindowRateLimiter = (options = {}) => {
   return async (req, res, next) => {
@@ -16,15 +17,21 @@ export const fixedWindowRateLimiter = (options = {}) => {
 
     // Retrieve active policy for this endpoint from cache
     const policy = getPolicyForEndpoint(endpoint);
+    const hasDbPolicy = !!policy;
 
-    // If policy is explicitly disabled, bypass rate limiting
-    if (!policy.enabled) {
+    // Cascading resolution:
+    // 1. Dynamic database policy if present
+    // 2. Options passed inline to fixedWindowRateLimiter
+    // 3. Global default configurations
+    const strategyName = (hasDbPolicy ? policy.algorithm : null) || options.strategy || 'fixed-window';
+    const limit = (hasDbPolicy ? policy.maxRequests : null) ?? options.maxRequests ?? (parseInt(process.env.RATE_LIMIT_MAX, 10) || 100);
+    const windowDuration = (hasDbPolicy ? policy.windowInSeconds : null) ?? options.windowInSeconds ?? (parseInt(process.env.RATE_LIMIT_WINDOW, 10) || 60);
+    const enabled = (hasDbPolicy ? policy.enabled : null) ?? options.enabled ?? true;
+
+    // If rate limiting is disabled for this endpoint, bypass
+    if (!enabled) {
       return next();
     }
-
-    const strategyName = policy.algorithm || 'fixed-window';
-    const limit = policy.maxRequests;
-    const windowDuration = policy.windowInSeconds;
 
     const identifier = req.user?.id || req.ip || 'unknown';
 

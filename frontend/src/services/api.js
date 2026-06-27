@@ -89,4 +89,22 @@ export const getAnalyticsData = async () => {
   return response.data;
 };
 
+/**
+ * Fetch all configured rate limiting policies
+ */
+export const getPolicies = async () => {
+  await ensureAuthenticated();
+  const response = await api.get('/api/policies');
+  return response.data;
+};
+
+/**
+ * Update a specific rate limiting policy configuration
+ */
+export const updatePolicy = async (id, data) => {
+  await ensureAuthenticated();
+  const response = await api.put(`/api/policies/${id}`, data);
+  return response.data;
+};
+
 export default api;

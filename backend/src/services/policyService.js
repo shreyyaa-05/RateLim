@@ -111,10 +111,5 @@ export const stopPolicyService = () => {
  * @returns {Object} Configured or fallback rate limiting policy
  */
 export const getPolicyForEndpoint = (endpoint) => {
-  const policy = policiesCache.get(endpoint);
-  if (policy) {
-    return policy;
-  }
-  // If no policy exists, return fallback default limits
-  return { ...DEFAULT_LIMITS, endpoint };
+  return policiesCache.get(endpoint) || null;
 };

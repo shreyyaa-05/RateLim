@@ -44,12 +44,20 @@ test('Rate Limit Policy Service, Controller, and Middleware Tests', async (t) =>
     }
   ];
 
-  // Apply mocks to RateLimitPolicy model
-  RateLimitPolicy.find = () => {
+  // Mock Query builder that is thenable to support await and supports chaining .sort()
+  const createMockQuery = () => {
     return {
-      sort: () => Promise.resolve(mockDatabase)
+      then(onResolve, onReject) {
+        return Promise.resolve(mockDatabase).then(onResolve, onReject);
+      },
+      sort() {
+        return this;
+      }
     };
   };
+
+  // Apply mocks to RateLimitPolicy model
+  RateLimitPolicy.find = () => createMockQuery();
 
   RateLimitPolicy.findByIdAndUpdate = async (id, update, options) => {
     const item = mockDatabase.find(d => d._id === id);
@@ -115,27 +123,29 @@ test('Rate Limit Policy Service, Controller, and Middleware Tests', async (t) =>
     
     // Check `/test` configured policy
     const policy = policyService.getPolicyForEndpoint('/test');
+    assert.ok(policy);
     assert.strictEqual(policy.maxRequests, 2);
     assert.strictEqual(policy.algorithm, 'fixed-window');
 
-    // Check fallback for missing policy `/non-existent`
+    // Check fallback for missing policy `/non-existent` (should be null)
     const fallbackPolicy = policyService.getPolicyForEndpoint('/non-existent');
-    assert.strictEqual(fallbackPolicy.maxRequests, parseInt(process.env.RATE_LIMIT_MAX, 10) || 100);
-    assert.strictEqual(fallbackPolicy.windowInSeconds, parseInt(process.env.RATE_LIMIT_WINDOW, 10) || 60);
+    assert.strictEqual(fallbackPolicy, null);
 
-    // Check fallback for disabled policy `/login`
+    // Check disabled policy `/login` (it returns the policy but shows enabled is false)
     const disabledPolicy = policyService.getPolicyForEndpoint('/login');
-    assert.strictEqual(disabledPolicy.maxRequests, parseInt(process.env.RATE_LIMIT_MAX, 10) || 100); // defaults back because it is disabled
+    assert.ok(disabledPolicy);
+    assert.strictEqual(disabledPolicy.enabled, false);
   });
 
   await t.test('cache refresh: initPolicyService should set up cache refresh interval', async () => {
-    let loadCalledCount = 0;
-    const originalLoadPolicies = policyService.loadPolicies;
-    policyService.loadPolicies = async () => {
-      loadCalledCount++;
+    let findCalledCount = 0;
+    const originalFindMock = RateLimitPolicy.find;
+    RateLimitPolicy.find = () => {
+      findCalledCount++;
+      return createMockQuery();
     };
 
-    // Temporarily speed up the refresh interval for tests by replacing setInterval
+    // Temporarily replace setInterval
     const originalSetInterval = global.setInterval;
     let intervalCallback = null;
     global.setInterval = (cb, time) => {
@@ -146,21 +156,23 @@ test('Rate Limit Policy Service, Controller, and Middleware Tests', async (t) =>
     global.clearInterval = (id) => {};
 
     await policyService.initPolicyService();
-    assert.strictEqual(loadCalledCount, 1); // loaded initially
+    assert.strictEqual(findCalledCount, 1); // loaded initially
     assert.ok(intervalCallback);
 
     // Manually trigger interval callback
     await intervalCallback();
-    assert.strictEqual(loadCalledCount, 2); // loaded second time
+    assert.strictEqual(findCalledCount, 2); // loaded second time
 
-    // Restore timers
+    // Restore timers and mocks
     global.setInterval = originalSetInterval;
     global.clearInterval = originalClearInterval;
-    policyService.loadPolicies = originalLoadPolicies;
+    RateLimitPolicy.find = originalFindMock;
     policyService.stopPolicyService();
   });
 
   await t.test('update endpoint: updatePolicy controller should validate input and update policies', async () => {
+    await policyService.loadPolicies();
+
     // 1. Success case
     const { mockReq: req1, mockRes: res1 } = setupMockContext(
       { algorithm: 'sliding-window', maxRequests: 10, windowInSeconds: 30, enabled: true },
@@ -172,8 +184,8 @@ test('Rate Limit Policy Service, Controller, and Middleware Tests', async (t) =>
     assert.strictEqual(res1.body.algorithm, 'sliding-window');
 
     // Verify cache updated instantly
-    await policyService.loadPolicies();
     const updated = policyService.getPolicyForEndpoint('/test');
+    assert.ok(updated);
     assert.strictEqual(updated.maxRequests, 10);
     assert.strictEqual(updated.algorithm, 'sliding-window');
 
