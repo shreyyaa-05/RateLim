@@ -6,7 +6,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "benchmark:fixed": "k6 run -e PATH=test performance/loadTest.js",
+    "benchmark:sliding": "k6 run -e PATH=sliding-test performance/loadTest.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
