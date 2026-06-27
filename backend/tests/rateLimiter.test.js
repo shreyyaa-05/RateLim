@@ -67,11 +67,13 @@ test('Fixed Window Rate Limiter Middleware Tests', async (t) => {
     };
   };
 
+  const limiter = fixedWindowRateLimiter({ maxRequests: 3, windowInSeconds: 10 });
+
   await t.test('should allow requests below the maximum limit and increment counter correctly', async () => {
     // Request #1
     const { mockReq: req1, mockRes: res1, responseHeaders: h1 } = setupMockRequestContext();
     let next1Called = false;
-    await fixedWindowRateLimiter(req1, res1, () => { next1Called = true; });
+    await limiter(req1, res1, () => { next1Called = true; });
 
     assert.strictEqual(next1Called, true);
     assert.strictEqual(h1['X-RateLimit-Limit'], 3);
@@ -80,7 +82,7 @@ test('Fixed Window Rate Limiter Middleware Tests', async (t) => {
     // Request #2
     const { mockReq: req2, mockRes: res2, responseHeaders: h2 } = setupMockRequestContext();
     let next2Called = false;
-    await fixedWindowRateLimiter(req2, res2, () => { next2Called = true; });
+    await limiter(req2, res2, () => { next2Called = true; });
 
     assert.strictEqual(next2Called, true);
     assert.strictEqual(h2['X-RateLimit-Remaining'], 1);
@@ -88,7 +90,7 @@ test('Fixed Window Rate Limiter Middleware Tests', async (t) => {
     // Request #3
     const { mockReq: req3, mockRes: res3, responseHeaders: h3 } = setupMockRequestContext();
     let next3Called = false;
-    await fixedWindowRateLimiter(req3, res3, () => { next3Called = true; });
+    await limiter(req3, res3, () => { next3Called = true; });
 
     assert.strictEqual(next3Called, true);
     assert.strictEqual(h3['X-RateLimit-Remaining'], 0);
@@ -98,7 +100,7 @@ test('Fixed Window Rate Limiter Middleware Tests', async (t) => {
     // Request #4 (counter is at 3, this will increment to 4, exceeding max rate limit limit of 3)
     const { mockReq: req4, mockRes: res4, responseHeaders: h4 } = setupMockRequestContext();
     let next4Called = false;
-    await fixedWindowRateLimiter(req4, res4, () => { next4Called = true; });
+    await limiter(req4, res4, () => { next4Called = true; });
 
     assert.strictEqual(next4Called, false);
     assert.strictEqual(res4.statusCode, 429);
@@ -108,6 +110,30 @@ test('Fixed Window Rate Limiter Middleware Tests', async (t) => {
     assert.strictEqual(res4.body.status, 'error');
     assert.strictEqual(res4.body.message, 'Too Many Requests');
     assert.strictEqual(res4.body.retryAfter, 10);
+  });
+
+  await t.test('should support custom configuration dynamically', async () => {
+    // Using a key prefix or different IP to isolate tests from previous counter
+    const customLimiter = fixedWindowRateLimiter({ maxRequests: 1, windowInSeconds: 5 });
+    
+    // Request #1 (should pass)
+    const { mockReq: req1, mockRes: res1, responseHeaders: h1 } = setupMockRequestContext();
+    req1.ip = '192.168.1.2'; // separate IP
+    let next1Called = false;
+    await customLimiter(req1, res1, () => { next1Called = true; });
+
+    assert.strictEqual(next1Called, true);
+    assert.strictEqual(h1['X-RateLimit-Limit'], 1);
+    assert.strictEqual(h1['X-RateLimit-Remaining'], 0);
+
+    // Request #2 (should block)
+    const { mockReq: req2, mockRes: res2, responseHeaders: h2 } = setupMockRequestContext();
+    req2.ip = '192.168.1.2';
+    let next2Called = false;
+    await customLimiter(req2, res2, () => { next2Called = true; });
+
+    assert.strictEqual(next2Called, false);
+    assert.strictEqual(res2.statusCode, 429);
   });
 
   // Restore client configuration

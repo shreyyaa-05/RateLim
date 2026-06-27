@@ -5,6 +5,6 @@ import { fixedWindowRateLimiter } from '../middleware/rateLimiter.js';
 const router = express.Router();
 
 // GET /test
-router.get('/', fixedWindowRateLimiter, testRateLimit);
+router.get('/', fixedWindowRateLimiter({ maxRequests: 5, windowInSeconds: 10 }), testRateLimit);
 
 export default router;

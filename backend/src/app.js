@@ -2,6 +2,7 @@ import express from 'express';
 import morgan from 'morgan';
 import healthRoutes from './routes/healthRoutes.js';
 import testRoutes from './routes/testRoutes.js';
+import loginRoutes from './routes/loginRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(morgan(logFormat));
 // Register routes
 app.use('/health', healthRoutes);
 app.use('/test', testRoutes);
+app.use('/login', loginRoutes);
 
 // Fallback for 404 route not found
 app.use((req, res, next) => {
