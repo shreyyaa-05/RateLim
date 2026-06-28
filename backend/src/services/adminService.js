@@ -39,11 +39,11 @@ export const getAdminHealth = () => {
  */
 export const getAdminConfig = () => {
   return {
-    supportedAlgorithms: ['Fixed Window Counter', 'Sliding Window Log'],
+    supportedAlgorithms: ['Fixed Window Counter', 'Sliding Window Log', 'Sliding Window Counter', 'Token Bucket'],
     defaultLimits: {
       maxRequests: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
       windowInSeconds: parseInt(process.env.RATE_LIMIT_WINDOW, 10) || 60,
     },
-    availableStrategies: ['fixed-window', 'sliding-window'],
+    availableStrategies: ['fixed-window', 'sliding-window', 'sliding-window-counter', 'token-bucket'],
   };
 };

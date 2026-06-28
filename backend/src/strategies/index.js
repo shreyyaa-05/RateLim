@@ -1,9 +1,13 @@
 import { fixedWindowStrategy } from './fixedWindowStrategy.js';
 import { slidingWindowStrategy } from './slidingWindowStrategy.js';
+import { slidingWindowCounterStrategy } from './slidingWindowCounterStrategy.js';
+import { tokenBucketStrategy } from './tokenBucketStrategy.js';
 
 const strategies = {
   'fixed-window': fixedWindowStrategy,
   'sliding-window': slidingWindowStrategy,
+  'sliding-window-counter': slidingWindowCounterStrategy,
+  'token-bucket': tokenBucketStrategy,
 };
 
 /**

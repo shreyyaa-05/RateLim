@@ -35,8 +35,8 @@ export const updatePolicy = async (req, res, next) => {
 
     // Input Validation
     const errors = [];
-    if (algorithm !== undefined && !['fixed-window', 'sliding-window'].includes(algorithm)) {
-      errors.push("Algorithm must be either 'fixed-window' or 'sliding-window'.");
+    if (algorithm !== undefined && !['fixed-window', 'sliding-window', 'sliding-window-counter', 'token-bucket'].includes(algorithm)) {
+      errors.push("Algorithm must be 'fixed-window', 'sliding-window', 'sliding-window-counter', or 'token-bucket'.");
     }
     if (maxRequests !== undefined && (!Number.isInteger(maxRequests) || maxRequests <= 0)) {
       errors.push('maxRequests must be a positive integer.');

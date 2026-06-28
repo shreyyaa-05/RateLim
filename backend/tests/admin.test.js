@@ -99,6 +99,6 @@ test('Admin Services, Controllers & Stats Tracker Middleware Tests', async (t) =
 
     assert.strictEqual(mockRes.statusCode, 200);
     assert.strictEqual(mockRes.body.status, 'success');
-    assert.deepStrictEqual(mockRes.body.data.availableStrategies, ['fixed-window', 'sliding-window']);
+    assert.deepStrictEqual(mockRes.body.data.availableStrategies, ['fixed-window', 'sliding-window', 'sliding-window-counter', 'token-bucket']);
   });
 });

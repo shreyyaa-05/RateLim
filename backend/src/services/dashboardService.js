@@ -36,6 +36,10 @@ export const getDashboardStats = () => {
     algorithm = 'Sliding Window';
   } else if (algorithm === 'fixed-window' || algorithm === 'Fixed Window Counter') {
     algorithm = 'Fixed Window';
+  } else if (algorithm === 'sliding-window-counter' || algorithm === 'Sliding Window Counter') {
+    algorithm = 'Sliding Window Counter';
+  } else if (algorithm === 'token-bucket' || algorithm === 'Token Bucket') {
+    algorithm = 'Token Bucket';
   }
 
   return {
