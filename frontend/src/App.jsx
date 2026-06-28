@@ -3,26 +3,18 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Algorithms from './pages/Algorithms';
-import './App.css';
 
-function App() {
+export default function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-neutral-50 text-neutral-800">
-      {/* Top Header Navigation */}
+    <div className="flex flex-col h-screen overflow-hidden">
       <Navbar />
-
-      {/* Main Body Layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Side Menu */}
         <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-
-        {/* Dynamic Page Content */}
-        {currentPage === 'dashboard' ? <Dashboard /> : <Algorithms />}
+        {currentPage === 'dashboard' && <Dashboard />}
+        {currentPage === 'algorithms' && <Algorithms />}
       </div>
     </div>
   );
 }
-
-export default App;
