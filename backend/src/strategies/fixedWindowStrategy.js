@@ -40,11 +40,13 @@ export const fixedWindowStrategy = async (ip, options) => {
   const remaining = Math.max(0, limit - count);
   const isAllowed = count <= limit;
   const retryAfter = ttl > 0 ? ttl : windowDuration;
+  const reset = Math.ceil(Date.now() / 1000) + (ttl > 0 ? ttl : windowDuration);
 
   return {
     isAllowed,
     limit,
     remaining,
-    retryAfter
+    retryAfter,
+    reset
   };
 };

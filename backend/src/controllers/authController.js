@@ -7,8 +7,8 @@ import jwt from 'jsonwebtoken';
  * @param {string} userId User ID from MongoDB
  * @returns {string} Signed JWT token
  */
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'supersecretjwtkey', {
+const generateToken = (userId, role) => {
+  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET || 'supersecretjwtkey', {
     expiresIn: '1d',
   });
 };
@@ -18,7 +18,7 @@ const generateToken = (userId) => {
  */
 export const register = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, role } = req.body;
 
     if (!username || !password) {
       const error = new Error('Username and password are required.');
@@ -33,8 +33,8 @@ export const register = async (req, res, next) => {
       return next(error);
     }
 
-    const user = await User.create({ username, password });
-    const token = generateToken(user._id);
+    const user = await User.create({ username, password, role });
+    const token = generateToken(user._id, user.role);
 
     res.status(201).json({
       status: 'success',
@@ -42,6 +42,7 @@ export const register = async (req, res, next) => {
       user: {
         id: user._id,
         username: user.username,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -69,7 +70,7 @@ export const login = async (req, res, next) => {
       return next(error);
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     res.status(200).json({
       status: 'success',
@@ -77,6 +78,7 @@ export const login = async (req, res, next) => {
       user: {
         id: user._id,
         username: user.username,
+        role: user.role,
       },
     });
   } catch (error) {

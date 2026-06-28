@@ -142,6 +142,66 @@ test('Authentication Middleware & User-Based Rate Limiting Tests', async (t) => 
     assert.strictEqual(memoryDb[expectedKey], 1);
   });
 
+  await t.test('rate limiter: should respect role-based defaults for Guest role', async () => {
+    const userId = 'guest_user';
+    const limiter = fixedWindowRateLimiter(); // No inline limits passed
+
+    const { mockReq, mockRes, responseHeaders } = setupMockContext(null, '192.168.1.100');
+    mockReq.user = { id: userId, role: 'Guest' };
+
+    let nextCalled = false;
+    await limiter(mockReq, mockRes, () => { nextCalled = true; });
+
+    assert.strictEqual(nextCalled, true);
+    assert.strictEqual(responseHeaders['X-RateLimit-Limit'], 20);
+    assert.strictEqual(responseHeaders['X-RateLimit-Remaining'], 19);
+    assert.ok(responseHeaders['X-RateLimit-Reset']);
+  });
+
+  await t.test('rate limiter: should respect role-based defaults for Student role', async () => {
+    const userId = 'student_user';
+    const limiter = fixedWindowRateLimiter();
+
+    const { mockReq, mockRes, responseHeaders } = setupMockContext(null, '192.168.1.101');
+    mockReq.user = { id: userId, role: 'Student' };
+
+    let nextCalled = false;
+    await limiter(mockReq, mockRes, () => { nextCalled = true; });
+
+    assert.strictEqual(nextCalled, true);
+    assert.strictEqual(responseHeaders['X-RateLimit-Limit'], 100);
+    assert.strictEqual(responseHeaders['X-RateLimit-Remaining'], 99);
+  });
+
+  await t.test('rate limiter: should respect role-based defaults for Premium role', async () => {
+    const userId = 'premium_user';
+    const limiter = fixedWindowRateLimiter();
+
+    const { mockReq, mockRes, responseHeaders } = setupMockContext(null, '192.168.1.102');
+    mockReq.user = { id: userId, role: 'Premium' };
+
+    let nextCalled = false;
+    await limiter(mockReq, mockRes, () => { nextCalled = true; });
+
+    assert.strictEqual(nextCalled, true);
+    assert.strictEqual(responseHeaders['X-RateLimit-Limit'], 1000);
+    assert.strictEqual(responseHeaders['X-RateLimit-Remaining'], 999);
+  });
+
+  await t.test('rate limiter: should bypass limits completely for Admin role', async () => {
+    const userId = 'admin_user';
+    const limiter = fixedWindowRateLimiter();
+
+    const { mockReq, mockRes, responseHeaders } = setupMockContext(null, '192.168.1.103');
+    mockReq.user = { id: userId, role: 'Admin' };
+
+    let nextCalled = false;
+    await limiter(mockReq, mockRes, () => { nextCalled = true; });
+
+    assert.strictEqual(nextCalled, true);
+    assert.strictEqual(responseHeaders['X-RateLimit-Limit'], undefined);
+  });
+
   // Restore client configurations
   Object.defineProperty(redisClient, 'isOpen', { get: () => originalIsOpen, configurable: true });
   Object.defineProperty(redisClient, 'isReady', { get: () => originalIsReady, configurable: true });

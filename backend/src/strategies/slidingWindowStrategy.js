@@ -43,24 +43,26 @@ export const slidingWindowStrategy = async (ip, options) => {
     const remaining = Math.max(0, limit - count);
     const isAllowed = count <= limit;
 
+    let oldestTimestamp = now;
+    const oldestMembers = await redisClient.zRange(key, 0, 0);
+    if (oldestMembers && oldestMembers.length > 0) {
+      oldestTimestamp = parseFloat(oldestMembers[0].split('-')[0]);
+    }
+
     let retryAfter = 0;
     if (!isAllowed) {
-      // Find the oldest request timestamp in the window to calculate retryAfter
-      const oldestMembers = await redisClient.zRange(key, 0, 0);
-      if (oldestMembers && oldestMembers.length > 0) {
-        const oldestTimestamp = parseFloat(oldestMembers[0].split('-')[0]);
-        const nextAllowedTime = oldestTimestamp + windowDuration * 1000;
-        retryAfter = Math.max(1, Math.ceil((nextAllowedTime - now) / 1000));
-      } else {
-        retryAfter = windowDuration;
-      }
+      const nextAllowedTime = oldestTimestamp + windowDuration * 1000;
+      retryAfter = Math.max(1, Math.ceil((nextAllowedTime - now) / 1000));
     }
+
+    const reset = Math.ceil((oldestTimestamp + windowDuration * 1000) / 1000);
 
     return {
       isAllowed,
       limit,
       remaining,
-      retryAfter
+      retryAfter,
+      reset
     };
   } catch (error) {
     // Fail-open: let the middleware catch this error and fail-open

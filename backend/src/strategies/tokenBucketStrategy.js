@@ -23,7 +23,8 @@ export const tokenBucketStrategy = async (ip, options) => {
       isAllowed: true,
       limit,
       remaining: limit,
-      retryAfter: 0
+      retryAfter: 0,
+      reset: Math.ceil(now / 1000)
     };
   }
 
@@ -76,11 +77,15 @@ export const tokenBucketStrategy = async (ip, options) => {
       retryAfter = Math.max(1, Math.ceil(waitTimeSeconds));
     }
 
+    const refillRateSeconds = limit / windowDuration; // tokens per second
+    const reset = Math.ceil(now / 1000 + (limit - tokens) / refillRateSeconds);
+
     return {
       isAllowed,
       limit,
       remaining,
-      retryAfter
+      retryAfter,
+      reset
     };
   } catch (error) {
     // Fail-open: let the middleware catch this error and fail-open

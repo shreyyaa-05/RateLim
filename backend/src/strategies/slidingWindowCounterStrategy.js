@@ -23,7 +23,8 @@ export const slidingWindowCounterStrategy = async (ip, options) => {
       isAllowed: true,
       limit,
       remaining: limit,
-      retryAfter: 0
+      retryAfter: 0,
+      reset: Math.ceil(now / 1000)
     };
   }
 
@@ -73,11 +74,14 @@ export const slidingWindowCounterStrategy = async (ip, options) => {
       }
     }
 
+    const reset = Math.ceil((currentWindowStart + windowDurationMs) / 1000);
+
     return {
       isAllowed,
       limit,
       remaining,
-      retryAfter
+      retryAfter,
+      reset
     };
   } catch (error) {
     // Fail-open: let the middleware catch this error and fail-open

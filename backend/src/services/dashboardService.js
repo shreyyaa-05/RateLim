@@ -40,6 +40,8 @@ export const getDashboardStats = () => {
     algorithm = 'Sliding Window Counter';
   } else if (algorithm === 'token-bucket' || algorithm === 'Token Bucket') {
     algorithm = 'Token Bucket';
+  } else if (algorithm === 'leaky-bucket' || algorithm === 'Leaky Bucket') {
+    algorithm = 'Leaky Bucket';
   }
 
   return {

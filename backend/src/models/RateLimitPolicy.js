@@ -11,7 +11,7 @@ const rateLimitPolicySchema = new mongoose.Schema(
     algorithm: {
       type: String,
       required: true,
-      enum: ['fixed-window', 'sliding-window', 'sliding-window-counter', 'token-bucket'],
+      enum: ['fixed-window', 'sliding-window', 'sliding-window-counter', 'token-bucket', 'leaky-bucket'],
       default: 'fixed-window',
     },
     maxRequests: {

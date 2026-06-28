@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    role: {
+      type: String,
+      enum: ['Guest', 'Student', 'Premium', 'Admin'],
+      default: 'Guest',
+    },
   },
   {
     timestamps: true,

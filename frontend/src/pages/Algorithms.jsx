@@ -11,6 +11,8 @@ const getAlgoName = (algo) => {
       return 'Sliding Window Counter';
     case 'token-bucket':
       return 'Token Bucket';
+    case 'leaky-bucket':
+      return 'Leaky Bucket';
     default:
       return algo;
   }
@@ -26,6 +28,8 @@ const getAlgoDescription = (algo) => {
       return 'Best for memory-efficient sliding windows. Approximates request rate without storing individual timestamps.';
     case 'token-bucket':
       return 'Best for APIs with bursty traffic. Refills tokens continuously and allows accumulated bursts.';
+    case 'leaky-bucket':
+      return 'Best for smooth traffic flow. Queue overflows are rejected, preventing downstream server saturation.';
     default:
       return '';
   }
@@ -84,7 +88,7 @@ export default function Algorithms() {
 
   // Perform client-side validation
   const validate = (algo, max, windowDur) => {
-    if (!['fixed-window', 'sliding-window', 'sliding-window-counter', 'token-bucket'].includes(algo)) {
+    if (!['fixed-window', 'sliding-window', 'sliding-window-counter', 'token-bucket', 'leaky-bucket'].includes(algo)) {
       return 'Unsupported rate limiting algorithm.';
     }
     const maxVal = parseFloat(max);
@@ -182,6 +186,7 @@ export default function Algorithms() {
                           <option value="sliding-window">Sliding Window</option>
                           <option value="sliding-window-counter">Sliding Window Counter</option>
                           <option value="token-bucket">Token Bucket</option>
+                          <option value="leaky-bucket">Leaky Bucket</option>
                         </select>
                       </div>
 
